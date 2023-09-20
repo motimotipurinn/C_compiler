@@ -34,12 +34,12 @@ bool consume(char op) {
 }
 void expect(char op) {
     if (token->kind != TK_RESERVED || token->str[0] != op)
-        error("'%c'ではありません", op);
+        error_at(token->str, "expected'%c'", op);
     token = token->next;
 }
 int expect_number() {
     if (token->kind != TK_NUM)
-        error("数ではありません");
+        error_at(token->str, "expected a number");
     int val = token->val;
     token = token->next;
     return val;
@@ -54,7 +54,9 @@ Token *new_token(TokenKind kind, Token *cur, char *str) {
     cur->next = tok;
     return tok;
 }
-Token *tokenize(char *p) {
+char *user_input;
+Token *tokenize() {
+    char *p = user_input;
     Token head;
     head.next = NULL;
     Token *cur = &head;
@@ -72,17 +74,30 @@ Token *tokenize(char *p) {
             cur->val = strtol(p, &p, 10);
             continue;
         }
-        error("Cannot tokenize");
+        error_at(p, "expected a number");
     }
     new_token(TK_EOF, cur, p);
     return head.next;
+}
+
+void error_at(char *loc, char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    int pos = loc - user_input;
+    fprintf(stderr, "%s\n", user_input);
+    fprintf(stderr, "%*s", pos, " ");
+    fprintf(stderr, "^ ");
+    vfprintf(stderr, fmt, ap);
+    fprintf(stderr, "\n");
+    exit(1);
 }
 int main(int argc, char **argv) {
     if (argc != 2) {
         fprintf(stderr, "引数の個数が正しくありません\n");
         return 1;
     }
-    token = tokenize(argv[1]);
+    user_input = argv[1];
+    token = tokenize();
     printf(".intel_syntax noprefix\n");
     printf(".globl main\n");
     printf("main:\n");
