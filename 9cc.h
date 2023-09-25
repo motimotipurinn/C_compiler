@@ -22,7 +22,7 @@ struct Token {
 void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
 bool consume(char *op);
-// Token *consume_ident();
+Token *consume_ident();
 void expect(char *op);
 int expect_number();
 bool at_eof();
@@ -37,6 +37,7 @@ typedef enum {
     ND_MUL,
     ND_DIV,
     ND_ASSIGN,
+    ND_EXPR_STMT,
     ND_LVAR,
     ND_EQ, //==
     ND_NE, //!=
@@ -51,8 +52,8 @@ struct Node {
     Node *next;
     Node *lhs;
     Node *rhs;
+    char name;
     int val;
-    int offset;
 };
 Node *program();
 void codegen(Node *node);

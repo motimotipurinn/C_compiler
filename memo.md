@@ -69,3 +69,7 @@ primary    = num | ident | "(" expr ")"
 program = stmt*
 stmt    = expr ";"
         | "return" expr ";"
+スタックに積まれたメモリアドレスを管理
+printf("  pop rax\n");
+printf("  mov rax, [rax]\n");
+printf("  push rax\n");

@@ -22,6 +22,11 @@ Node *new_num(int val) {
     node->val = val;
     return node;
 }
+Node *new_lvar(char name) {
+    Node *node = new_node(ND_LVAR);
+    node->name = name;
+    return node;
+}
 Node *program();
 Node *stmt();
 Node *expr();
@@ -54,7 +59,7 @@ Node *stmt() {
         expect(";");
         return node;
     }
-    Node *node = new_unary(ND_ASSIGN, expr());
+    Node *node = new_unary(ND_EXPR_STMT, expr());
     expect(";");
     return node;
 }
@@ -124,7 +129,7 @@ Node *unary() {
         return unary();
     }
     if (consume("-")) {
-        return new_binary(ND_SUB, new_num(0), primary());
+        return new_binary(ND_SUB, new_num(0), unary());
     }
     return primary();
 }
@@ -133,6 +138,10 @@ Node *primary() {
         Node *node = expr();
         expect(")");
         return node;
+    }
+    Token *tok = consume_ident();
+    if (tok) {
+        return new_lvar(*tok->str);
     }
     return new_num(expect_number());
 }
