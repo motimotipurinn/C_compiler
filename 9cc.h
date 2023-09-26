@@ -22,6 +22,7 @@ struct Token {
 void error(char *fmt, ...);
 void error_at(char *loc, char *fmt, ...);
 bool consume(char *op);
+char *strndup(char *p, int len);
 Token *consume_ident();
 void expect(char *op);
 int expect_number();
@@ -31,6 +32,12 @@ extern Token *token;
 Token *new_token(TokenKind kind, Token *cur, char *str, int len);
 bool startwith(char *p, char *q);
 Token *tokenize();
+typedef struct Var Var;
+struct Var {
+    Var *next;
+    char *name;
+    int offset;
+};
 typedef enum {
     ND_ADD,
     ND_SUB,
@@ -38,7 +45,7 @@ typedef enum {
     ND_DIV,
     ND_ASSIGN,
     ND_EXPR_STMT,
-    ND_LVAR,
+    ND_VAR,
     ND_EQ, //==
     ND_NE, //!=
     ND_LT, //<
@@ -52,8 +59,14 @@ struct Node {
     Node *next;
     Node *lhs;
     Node *rhs;
-    char name;
+    Var *var;
     int val;
 };
-Node *program();
-void codegen(Node *node);
+
+typedef struct {
+    Node *node;
+    Var *locals;
+    int stack_size;
+} Program;
+Program *program();
+void codegen(Program *prog);

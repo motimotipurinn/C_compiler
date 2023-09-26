@@ -19,6 +19,12 @@ void error_at(char *loc, char *fmt, ...) {
     fprintf(stderr, "\n");
     exit(1);
 }
+char *strndup(char *p, int len) {
+    char *buf = malloc(len + 1);
+    strncpy(buf, p, len);
+    buf[len] = '\0';
+    return buf;
+}
 bool consume(char *op) {
     if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len))
         return false;
@@ -89,8 +95,11 @@ Token *tokenize() {
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
         }
-        if ('a' <= *p && *p <= 'z') {
-            cur = new_token(TK_IDENT, cur, p++, 1);
+        if (is_alpha(*p)) {
+            char *q = p++;
+            while (is_alnum(*p))
+                p++;
+            cur = new_token(TK_IDENT, cur, q, p - q);
             // cur->len = 1;
             continue;
         }

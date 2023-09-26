@@ -1,11 +1,10 @@
 #include "9cc.h"
 
 void gen_addr(Node *node) {
-    if (node->kind != ND_LVAR) {
+    if (node->kind != ND_VAR) {
         error("代入の左辺値が変数ではありません");
     }
-    int offset = (node->name - 'a' + 1) * 8;
-    printf("  lea rax, [rbp-%d]\n", offset);
+    printf("  lea rax, [rbp-%d]\n", node->var->offset);
     printf("  push rax\n");
     return;
 }
@@ -29,7 +28,7 @@ void gen(Node *node) {
         gen(node->lhs);
         printf("  add rsp, 8\n");
         return;
-    case ND_LVAR:
+    case ND_VAR:
         gen_addr(node);
         load();
         return;
@@ -85,16 +84,16 @@ void gen(Node *node) {
     }
     printf("  push rax\n");
 }
-void codegen(Node *node) {
+void codegen(Program *prog) {
     printf(".intel_syntax noprefix\n");
     printf(".globl main\n");
     printf("main:\n");
     // prologue
     printf("  push rbp\n");
     printf("  mov rbp, rsp\n");
-    printf("  sub rsp, 208\n");
-    for (Node *n = node; n; n = n->next) {
-        gen(n);
+    printf("  sub rsp, %d\n", prog->stack_size);
+    for (Node *node = prog->node; node; node = node->next) {
+        gen(node);
         // printf("  pop rax\n");
     }
     // epilogue
