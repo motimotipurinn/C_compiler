@@ -88,3 +88,7 @@ stmt    = expr ";"
         | "{" stmt* "}"
         | ...
 ...
+引数なしのfunction
+primary = num
+        | ident ("(" ")")?
+        | "(" expr ")"
