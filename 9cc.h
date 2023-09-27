@@ -51,6 +51,8 @@ typedef enum {
     ND_LT, //<
     ND_LE, //<=
     ND_RETURN,
+    ND_IF,
+    ND_WHILE,
     ND_NUM,
 } NodeKind;
 typedef struct Node Node;
@@ -59,6 +61,9 @@ struct Node {
     Node *next;
     Node *lhs;
     Node *rhs;
+    Node *cond;
+    Node *then;
+    Node *els;
     Var *var;
     int val;
 };

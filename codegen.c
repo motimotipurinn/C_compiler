@@ -1,5 +1,6 @@
 #include "9cc.h"
 
+int labelseq = 0;
 void gen_addr(Node *node) {
     if (node->kind != ND_VAR) {
         error("代入の左辺値が変数ではありません");
@@ -37,6 +38,40 @@ void gen(Node *node) {
         gen(node->rhs);
         store();
         return;
+    case ND_IF: {
+        int seq = labelseq++;
+        if (node->els) {
+            gen(node->cond);
+            printf("  pop rax\n");
+            printf("  cmp rax, 0\n");
+            printf("  je  .Lelse%d\n", seq);
+            gen(node->then);
+            printf("  jmp .Lend%d\n", seq);
+            printf(".Lelse%d:\n", seq);
+            gen(node->els);
+            printf(".Lend%d:\n", seq);
+        } else {
+            gen(node->cond);
+            printf("  pop rax\n");
+            printf("  cmp rax, 0\n");
+            printf("  je  .Lend%d\n", seq);
+            gen(node->then);
+            printf(".Lend%d:\n", seq);
+        }
+        return;
+    }
+    case ND_WHILE: {
+        int seq = labelseq++;
+        printf(".Lbegin%d:\n", seq);
+        gen(node->cond);
+        printf("  pop rax\n");
+        printf("  cmp rax, 0\n");
+        printf("  je  .Lend%d\n", seq);
+        gen(node->then);
+        printf("  jmp .Lbegin%d\n", seq);
+        printf(".Lend%d:\n", seq);
+        return;
+    }
     case ND_RETURN:
         gen(node->lhs);
         printf("  pop rax\n");

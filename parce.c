@@ -71,10 +71,32 @@ Program *program() {
     prog->locals = locals;
     return prog;
 }
+Node *read_expr_stmt() {
+    return new_unary(ND_EXPR_STMT, expr());
+}
 Node *stmt() {
     if (consume("return")) {
         Node *node = new_unary(ND_RETURN, expr());
         expect(";");
+        return node;
+    }
+    if (consume("while")) {
+        Node *node = new_node(ND_WHILE);
+        expect("(");
+        node->cond = expr();
+        expect(")");
+        node->then = stmt();
+        return node;
+    }
+    if (consume("if")) {
+        Node *node = new_node(ND_IF);
+        expect("(");
+        node->cond = expr();
+        expect(")");
+        node->then = stmt();
+        if (consume("else")) {
+            node->els = stmt();
+        }
         return node;
     }
     Node *node = new_unary(ND_EXPR_STMT, expr());

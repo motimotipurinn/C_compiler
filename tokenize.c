@@ -62,7 +62,7 @@ Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
     cur->next = tok;
     return tok;
 }
-bool startwith(char *p, char *q) {
+bool startswith(char *p, char *q) {
     return memcmp(p, q, strlen(q)) == 0;
 }
 bool is_alpha(char c) {
@@ -71,6 +71,23 @@ bool is_alpha(char c) {
 int is_alnum(char c) {
     return ('0' <= c && c <= '9') || is_alpha(c);
 }
+char *starts_with_reserved(char *p) {
+    static char *kw[] = {"return", "if", "else", "while"};
+    for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++) {
+        int len = strlen(kw[i]);
+        if (startswith(p, kw[i]) && !is_alnum(p[len])) {
+            return kw[i];
+        }
+    }
+    static char *ops[] = {"==", "!=", "<=", ">="};
+    for (int i = 0; i < sizeof(ops) / sizeof(*ops); i++) {
+        if (startswith(p, ops[i])) {
+            return ops[i];
+        }
+    }
+    return NULL;
+}
+
 Token *tokenize() {
     char *p = user_input;
     Token head;
@@ -81,14 +98,11 @@ Token *tokenize() {
             p++;
             continue;
         }
-        if (startwith(p, "return") && !is_alnum(p[6])) {
-            cur = new_token(TK_RESERVED, cur, p, 6);
-            p += 6;
-            continue;
-        }
-        if (startwith(p, "==") || startwith(p, "!=") || startwith(p, "<=") || startwith(p, ">=")) {
-            cur = new_token(TK_RESERVED, cur, p, 2);
-            p += 2;
+        char *kw = starts_with_reserved(p);
+        if (kw) {
+            int len = strlen(kw);
+            cur = new_token(TK_RESERVED, cur, p, len);
+            p += len;
             continue;
         }
         if (strchr("+-*/()<>;=", *p)) {

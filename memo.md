@@ -73,3 +73,12 @@ stmt    = expr ";"
 printf("  pop rax\n");
 printf("  mov rax, [rax]\n");
 printf("  push rax\n");
+if,while,for
+program = stmt*
+stmt    = expr ";"
+        | "if" "(" expr ")" stmt ("else" stmt)?
+        | "while" "(" expr ")" stmt
+        | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+        | ...
+fstack-protectorというオプションを渡すと、プロローグで「カナリー」（canary）といわれるポインタサイズのランダムな整数を関数フレームに出力して、エピローグでバッファーオーバーフローなどによってカナリーの値が変わっていないことを確認する
+機械語レベルの仕様はある程度決まっており、その仕様をABI（Application Binary Interface）という。
