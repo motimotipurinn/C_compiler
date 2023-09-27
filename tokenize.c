@@ -72,7 +72,7 @@ int is_alnum(char c) {
     return ('0' <= c && c <= '9') || is_alpha(c);
 }
 char *starts_with_reserved(char *p) {
-    static char *kw[] = {"return", "if", "else", "while"};
+    static char *kw[] = {"return", "if", "else", "while", "for"};
     for (int i = 0; i < sizeof(kw) / sizeof(*kw); i++) {
         int len = strlen(kw[i]);
         if (startswith(p, kw[i]) && !is_alnum(p[len])) {
