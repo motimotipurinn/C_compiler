@@ -71,6 +71,7 @@ struct Node {
     Node *inc;
     Node *body;
     char *funcname;
+    Node *args;
     Var *var;
     int val;
 };
