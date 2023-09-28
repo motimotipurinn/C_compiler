@@ -42,6 +42,7 @@ Var *push_var(char *name) {
     locals = var;
     return var;
 }
+Function *function();
 Node *stmt();
 Node *expr();
 Node *assign();
@@ -51,25 +52,35 @@ Node *add();
 Node *mul();
 Node *unary();
 Node *primary();
-Program *program() {
-    /*int i = 0;
+Function *program() {
+    Function head;
+    head.next = NULL;
+    Function *cur = &head;
     while (!at_eof()) {
-        code[i++] = stmt();
+        cur->next = function();
+        cur = cur->next;
     }
-    code[i] = NULL;*/
+    return head.next;
+}
+Function *function() {
     locals = NULL;
+    char *name = expect_ident();
+    expect("(");
+    expect(")");
+    expect("{");
     Node head;
     head.next = NULL;
     Node *cur = &head;
 
-    while (!at_eof()) {
+    while (!consume("}")) {
         cur->next = stmt();
         cur = cur->next;
     }
-    Program *prog = calloc(1, sizeof(Program));
-    prog->node = head.next;
-    prog->locals = locals;
-    return prog;
+    Function *fn = calloc(1, sizeof(Function));
+    fn->node = head.next;
+    fn->name = name;
+    fn->locals = locals;
+    return fn;
 }
 Node *read_expr_stmt() {
     return new_unary(ND_EXPR_STMT, expr());

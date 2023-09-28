@@ -26,6 +26,7 @@ char *strndup(char *p, int len);
 Token *consume_ident();
 void expect(char *op);
 int expect_number();
+char *expect_ident();
 bool at_eof();
 extern char *user_input;
 extern Token *token;
@@ -76,10 +77,13 @@ struct Node {
     int val;
 };
 
-typedef struct {
+typedef struct Function Function;
+struct Function {
+    Function *next;
+    char *name;
     Node *node;
     Var *locals;
     int stack_size;
-} Program;
-Program *program();
-void codegen(Program *prog);
+};
+Function *program();
+void codegen(Function *prog);
