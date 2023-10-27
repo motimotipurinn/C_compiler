@@ -52,10 +52,12 @@ typedef enum {
     ND_ASSIGN,
     ND_EXPR_STMT,
     ND_VAR,
-    ND_EQ, //==
-    ND_NE, //!=
-    ND_LT, //<
-    ND_LE, //<=
+    ND_EQ,    //==
+    ND_NE,    //!=
+    ND_LT,    //<
+    ND_LE,    //<=
+    ND_ADDR,  // unary &
+    ND_DEREF, // unary *
     ND_RETURN,
     ND_IF,
     ND_WHILE,
