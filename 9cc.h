@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct Type Type;
+
 typedef enum {
     TK_RESERVED,
     TK_IDENT,
@@ -70,6 +72,7 @@ typedef struct Node Node;
 struct Node {
     NodeKind kind;
     Node *next;
+    Type *ty;
     Token *tok;
     Node *lhs;
     Node *rhs;
@@ -95,4 +98,10 @@ struct Function {
     int stack_size;
 };
 Function *program();
+typedef enum { TY_INT, TY_PTR } TypeKind;
+struct Type {
+    TypeKind kind;
+    Type *base;
+};
+void add_type(Function *prog);
 void codegen(Function *prog);

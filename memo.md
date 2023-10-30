@@ -94,3 +94,9 @@ stmt    = expr ";"
 primary = num
         | ident ("(" ")")?
         | "(" expr ")"
+単項&と単項*
+unary = "+"? primary
+      | "-"? primary
+      | "*" unary
+      | "&" unary
+      

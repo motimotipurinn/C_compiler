@@ -101,7 +101,8 @@
         "iomanip": "cpp",
         "limits": "cpp",
         "typeinfo": "cpp",
-        "variant": "cpp"
+        "variant": "cpp",
+        "9cc.h": "c"
     },
     "C_Cpp.errorSquiggles": "Enabled",
     "editor.formatOnPaste": true,

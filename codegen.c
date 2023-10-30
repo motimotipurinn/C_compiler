@@ -148,9 +148,15 @@ void gen(Node *node) {
     printf("  pop rax\n");
     switch (node->kind) {
     case ND_ADD:
+        if (node->ty->kind == TY_PTR) {
+            printf("  imul rdi, 8\n");
+        }
         printf("  add rax, rdi\n");
         break;
     case ND_SUB:
+        if (node->ty->kind == TY_PTR) {
+            printf("  imul rdi, 8\n");
+        }
         printf("  sub rax, rdi\n");
         break;
     case ND_MUL:
