@@ -99,4 +99,5 @@ unary = "+"? primary
       | "-"? primary
       | "*" unary
       | "&" unary
-      
+unary = "sizeof" unary
+      | ("+" | "-")? primary
