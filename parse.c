@@ -313,13 +313,17 @@ Node *func_args() {
     expect(")");
     return head;
 }
+// primary = "(" expr ")" | "sizeof" unary | ident func-args? | num
 Node *primary() {
+    Token *tok;
     if (consume("(")) {
         Node *node = expr();
         expect(")");
         return node;
     }
-    Token *tok;
+    if (tok = consume("sizeof")) {
+        return new_unary(ND_SIZEOF, unary(), tok);
+    }
     if (tok = consume_ident()) {
         if (consume("(")) {
             Node *node = new_node(ND_FUNCALL, tok);
