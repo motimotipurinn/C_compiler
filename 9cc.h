@@ -27,6 +27,7 @@ void error_tok(Token *tok, char *fmt, ...);
 Token *consume(char *op);
 char *strndup(char *p, int len);
 Token *consume_ident();
+Token *peek(char *s);
 void expect(char *op);
 int expect_number();
 char *expect_ident();
@@ -39,6 +40,7 @@ Token *tokenize();
 typedef struct Var Var;
 struct Var {
     char *name;
+    Type *ty;
     int offset;
 };
 typedef struct VarList VarList;
@@ -54,6 +56,7 @@ typedef enum {
     ND_ASSIGN,
     ND_EXPR_STMT,
     ND_VAR,
+    ND_NULL,
     ND_EQ,    //==
     ND_NE,    //!=
     ND_LT,    //<
@@ -103,5 +106,7 @@ struct Type {
     TypeKind kind;
     Type *base;
 };
+Type *int_type();
+Type *pointer_to(Type *base);
 void add_type(Function *prog);
 void codegen(Function *prog);

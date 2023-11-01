@@ -36,6 +36,8 @@ void gen(Node *node) {
         gen(node->lhs);
         printf("  add rsp, 8\n");
         return;
+    case ND_NULL:
+        return;
     case ND_VAR:
         gen_addr(node);
         load();

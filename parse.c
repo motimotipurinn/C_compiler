@@ -22,7 +22,7 @@ Node *new_binary(NodeKind kind, Node *lhs, Node *rhs, Token *tok) {
     node->rhs = rhs;
     return node;
 }
-Node *new_unary(NodeKind kind, Node *expr, Node *tok) {
+Node *new_unary(NodeKind kind, Node *expr, Token *tok) {
     Node *node = new_node(kind, tok);
     node->lhs = expr;
     return node;
@@ -37,16 +37,18 @@ Node *new_var(Var *var, Token *tok) {
     node->var = var;
     return node;
 }
-Var *push_var(char *name) {
+Var *push_var(char *name, Type *ty) {
     Var *var = calloc(1, sizeof(Var));
     VarList *vl = calloc(1, sizeof(VarList));
     vl->next = locals;
     vl->var = var;
     var->name = name;
+    var->ty = ty;
     locals = vl;
     return var;
 }
 Function *function();
+Node *declaration();
 Node *stmt();
 Node *expr();
 Node *assign();
@@ -66,24 +68,41 @@ Function *program() {
     }
     return head.next;
 }
+// basetype = "int" "*"*
+Type *basetype() {
+    expect("int");
+    Type *ty = int_type();
+    while (consume("*"))
+        ty = pointer_to(ty);
+    return ty;
+}
+
+VarList *read_func_param() {
+    VarList *vl = calloc(1, sizeof(VarList));
+    Type *ty = basetype();
+    vl->var = push_var(expect_ident(), ty);
+    return vl;
+}
 VarList *read_func_params() {
     if (consume(")")) {
         return NULL;
     }
-    VarList *head = calloc(1, sizeof(VarList));
-    head->var = push_var(expect_ident());
+    VarList *head = read_func_param();
     VarList *cur = head;
     while (!consume(")")) {
         expect(",");
-        cur->next = calloc(1, sizeof(VarList));
-        cur->next->var = push_var(expect_ident());
+        cur->next = read_func_param();
         cur = cur->next;
     }
     return head;
 }
+// function = basetype ident "(" params? ")" "{" stmt* "}"
+// params   = param ("," param)*
+// param    = basetype ident
 Function *function() {
     locals = NULL;
     Function *fn = calloc(1, sizeof(Function));
+    basetype();
     fn->name = expect_ident();
     expect("(");
     fn->params = read_func_params();
@@ -100,10 +119,33 @@ Function *function() {
     fn->locals = locals;
     return fn;
 }
+// declaration = basetype ident("=" expr) ";"
+Node *declaration() {
+    Token *tok = token;
+    Type *ty = basetype();
+    Var *var = push_var(expect_ident(), ty);
+
+    if (consume(";"))
+        return new_node(ND_NULL, tok);
+
+    expect("=");
+    Node *lhs = new_var(var, tok);
+    Node *rhs = expr();
+    expect(";");
+    Node *node = new_binary(ND_ASSIGN, lhs, rhs, tok);
+    return new_unary(ND_EXPR_STMT, node, tok);
+}
 Node *read_expr_stmt() {
     Token *tok = token;
     return new_unary(ND_EXPR_STMT, expr(), tok);
 }
+// stmt = "return" expr ";"
+//      | "if" "(" expr ")" stmt ("else" stmt)?
+//      | "while" "(" expr ")" stmt
+//      | "for" "(" expr? ";" expr? ";" expr? ")" stmt
+//      | "{" stmt* "}"
+//      | declaration
+//      | expr ";"
 Node *stmt() {
     Token *tok;
     if (tok = consume("return")) {
@@ -160,6 +202,8 @@ Node *stmt() {
         }
         return node;
     }
+    if (tok = peek("int"))
+        return declaration();
     Node *node = new_unary(ND_EXPR_STMT, expr(), tok);
     expect(";");
     return node;
@@ -272,9 +316,8 @@ Node *primary() {
             return node;
         }
         Var *var = find_var(tok);
-        if (!var) {
-            var = push_var(strndup(tok->str, tok->len));
-        }
+        if (!var)
+            error_tok(tok, "undefined variable");
         return new_var(var, tok);
     }
     tok = token;
