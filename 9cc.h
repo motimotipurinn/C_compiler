@@ -42,6 +42,7 @@ struct Var {
     char *name;
     Type *ty;
     int offset;
+    bool is_local;
 };
 typedef struct VarList VarList;
 struct VarList {
@@ -101,7 +102,12 @@ struct Function {
     VarList *locals;
     int stack_size;
 };
-Function *program();
+typedef struct {
+    VarList *globals;
+    Function *fns;
+} Program;
+
+Program *program();
 typedef enum { TY_INT, TY_PTR, TY_ARRAY } TypeKind;
 struct Type {
     TypeKind kind;
@@ -112,5 +118,5 @@ Type *int_type();
 Type *pointer_to(Type *base);
 Type *array_of(Type *base, int size);
 int size_of(Type *ty);
-void add_type(Function *prog);
-void codegen(Function *prog);
+void add_type(Program *prog);
+void codegen(Program *prog);

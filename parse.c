@@ -1,6 +1,7 @@
 #include "9cc.h"
 
 VarList *locals;
+VarList *globals;
 Var *find_var(Token *tok) {
     for (VarList *vl = locals; vl; vl = vl->next) {
         Var *var = vl->var;
@@ -8,6 +9,12 @@ Var *find_var(Token *tok) {
             return var;
         }
     }
+    for (VarList *vl = globals; vl; vl = vl->next) {
+        Var *var = vl->var;
+        if (strlen(var->name) == tok->len && !memcmp(tok->str, var->name, tok->len))
+            return var;
+    }
+
     return NULL;
 }
 Node *new_node(NodeKind kind, Token *tok) {
@@ -37,17 +44,25 @@ Node *new_var(Var *var, Token *tok) {
     node->var = var;
     return node;
 }
-Var *push_var(char *name, Type *ty) {
+Var *push_var(char *name, Type *ty, bool is_local) {
     Var *var = calloc(1, sizeof(Var));
     VarList *vl = calloc(1, sizeof(VarList));
-    vl->next = locals;
     vl->var = var;
     var->name = name;
     var->ty = ty;
-    locals = vl;
+    var->is_local = is_local;
+    if (is_local) {
+        vl->next = locals;
+        locals = vl;
+    } else {
+        vl->next = globals;
+        globals = vl;
+    }
     return var;
 }
 Function *function();
+Type *basetype();
+void global_var();
 Node *declaration();
 Node *stmt();
 Node *expr();
@@ -57,16 +72,33 @@ Node *relational();
 Node *add();
 Node *mul();
 Node *unary();
+Node *postfix();
 Node *primary();
-Function *program() {
+bool is_function() {
+    Token *tok = token;
+    basetype();
+    bool isfunc = consume_ident() && consume("(");
+    token = tok;
+    return isfunc;
+}
+// program = (global-var | function)*
+Program *program() {
     Function head;
     head.next = NULL;
     Function *cur = &head;
+    globals = NULL;
     while (!at_eof()) {
-        cur->next = function();
-        cur = cur->next;
+        if (is_function()) {
+            cur->next = function();
+            cur = cur->next;
+        } else {
+            global_var();
+        }
     }
-    return head.next;
+    Program *prog = calloc(1, sizeof(Program));
+    prog->globals = globals;
+    prog->fns = head.next;
+    return prog;
 }
 // basetype = "int" "*"*
 Type *basetype() {
@@ -90,7 +122,7 @@ VarList *read_func_param() {
     char *name = expect_ident();
     ty = read_type_suffix(ty);
     VarList *vl = calloc(1, sizeof(VarList));
-    vl->var = push_var(name, ty);
+    vl->var = push_var(name, ty, true);
     return vl;
 }
 VarList *read_func_params() {
@@ -129,13 +161,21 @@ Function *function() {
     fn->locals = locals;
     return fn;
 }
+// global-var = basetype ident ("[" num "]")* ";"
+void global_var() {
+    Type *ty = basetype();
+    char *name = expect_ident();
+    ty = read_type_suffix(ty);
+    expect(";");
+    push_var(name, ty, false);
+}
 // declaration = basetype ident ("[" num "]")* ("=" expr) ";"
 Node *declaration() {
     Token *tok = token;
     Type *ty = basetype();
     char *name = expect_ident();
     ty = read_type_suffix(ty);
-    Var *var = push_var(name, ty);
+    Var *var = push_var(name, ty, true);
 
     if (consume(";"))
         return new_node(ND_NULL, tok);
@@ -298,7 +338,17 @@ Node *unary() {
         return new_unary(ND_ADDR, unary(), tok);
     if (tok = consume("*"))
         return new_unary(ND_DEREF, unary(), tok);
-    return primary();
+    return postfix();
+}
+Node *postfix() {
+    Node *node = primary();
+    Token *tok;
+    while (tok = consume("[")) {
+        Node *exp = new_binary(ND_ADD, node, expr(), tok);
+        expect("]");
+        node = new_unary(ND_DEREF, exp, tok);
+    }
+    return node;
 }
 Node *func_args() {
     if (consume(")")) {
